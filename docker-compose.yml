@@ -12,6 +12,9 @@ services:
       - .env
     depends_on:
       - database
+    networks:
+      - frontend
+      - backend
   database:
     image: postgres:12.0-alpine
     container_name: mprj-postgres
@@ -21,6 +24,20 @@ services:
       POSTGRES_USER: ${SQL_USER:-postgres}
       POSTGRES_PASSWORD: ${SQL_PASSWORD:-123456}
       POSTGRES_DB: ${SQL_DATABASE:-mprj}
-
+    networks:
+      - backend
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: mprj-pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-admin@gmail.com}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-123456}
+    ports:
+      - "${PGADMIN_PORT:-8081}:80"
+    networks:
+      - backend
+networks:
+  frontend:
+  backend:
 volumes:
   postgres_data:
