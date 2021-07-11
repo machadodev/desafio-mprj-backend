@@ -2,6 +2,7 @@ version: '3.7'
 
 services:
   web:
+    container_name: mprj-django
     build: ./app
     command: sh -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
     volumes:
@@ -35,6 +36,7 @@ services:
     ports:
       - "${PGADMIN_PORT:-8081}:80"
     networks:
+      - frontend
       - backend
 networks:
   frontend:
