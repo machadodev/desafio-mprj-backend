@@ -14,7 +14,7 @@ RUN apk update \
 
 # install dependencies
 RUN pip install --upgrade pip
-RUN pip install psycopg2-binary
+RUN pip install psycopg2-binary djangorestframework-xml
 COPY ./requirements.txt .
 COPY ./dev-requirements.txt .
 RUN pip install -r dev-requirements.txt
