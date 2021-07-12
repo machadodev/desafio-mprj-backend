@@ -1,10 +1,38 @@
+# Contratos
+
 class DatabaseService:
+    def findDocumento(self, dados):
+        pass
+
+class TJRJService:
+    def findTramitacao(self, dados):
+        pass
+    
+class LogService:    
+    def record(self, request, dados):
+        pass
+
+class CacheService:
+        pass
+
+# =========================================
+
+# Implementações
+
+# Aqui entram os detalhes do banco externo: 
+# HOST, PORT, USER e PASSWORD
+class MockExternalDatabaseService(DatabaseService):
     def findDocumento(self, dados):
         dados_documento = { "id": dados["id"], "id_tjrj": 2 }
         return dados_documento
 
-class TJRJService:
-    def findTramitacao(self, dados):
+# Aqui entram os detalhes do banco externo: 
+# HOST, PORT, USER e PASSWORD
+class MockTJRJSOAPService(TJRJService):
+    def __init__(self, ACCESS_TOKEN_TJRJ):
+        self.ACCESS_TOKEN = ACCESS_TOKEN_TJRJ
+        
+    def findTramitacao(self, dados):        
         tramitacao = '''
         <TRAMITACOES>
         <TRAMITACAO idtram="1">
@@ -18,13 +46,12 @@ class TJRJService:
         </TRAMITACOES>
         '''    
         return tramitacao
-    
-class LogService:    
+
+# 
+class KafkaLoggerService(LogService):
     def record(self, request, dados):
-        print("Logger Service:")
-        print("Request:", request)
-        print("Dados:", dados)
+        print("Logger Service Kafka:")
+        print("Producing data:", dados)
 
-
-class CacheService:
-        pass
+class RedisService(CacheService):
+    pass

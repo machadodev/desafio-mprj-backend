@@ -16,8 +16,6 @@ class ObterTramitacaoDocumentoUseCase:
     
     def obterTramitacaoDocumento(self, request, documento):
         tramitacao = None
-        
-        self.logService.record(request, "TESTE LOGGER")
                 
         # ii
         dados_documento = self.databaseService.findDocumento(documento)       
