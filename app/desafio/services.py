@@ -49,9 +49,20 @@ class MockTJRJSOAPService(TJRJService):
 
 # 
 class KafkaLoggerService(LogService):
+    class LoggerFormat:
+        def __init__(self, request, dados):
+            self.log = {
+                "scheme": request.scheme,
+                "path": request.path,
+                "method": request.method,                
+                "user_agent": request.headers['User-Agent'],
+                "data": dados
+            }
+    
     def record(self, request, dados):
+        log = self.LoggerFormat(request, dados)
         print("Logger Service Kafka:")
-        print("Producing data:", dados)
+        print("Log info:", log.log)
 
 class RedisService(CacheService):
     pass
