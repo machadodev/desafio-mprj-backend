@@ -1,8 +1,7 @@
-from desafio.services import *
-from project_config.settings import CACHE_TTL_IN_SECONDS
 from dependency_injector.wiring import inject, Provide
 from desafio.containers import Container
 from desafio.helper import hashString
+from desafio.Services.Protocols import CacheService, DatabaseService, LogService, TJRJService
 
 class ObterTramitacaoDocumentoUseCase:  
     # Dependencies injection
@@ -58,7 +57,7 @@ class ObterTramitacaoDocumentoUseCaseCacheDecorator(ObterTramitacaoDocumentoUseC
         
         if tramitacao is None:           
             tramitacao = super().obterTramitacaoDocumento(request, documento)
-            self.cacheService.set(documento, tramitacao, CACHE_TTL_IN_SECONDS)
+            self.cacheService.set(documento, tramitacao)
         
         return tramitacao
 

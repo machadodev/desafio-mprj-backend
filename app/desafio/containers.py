@@ -1,11 +1,12 @@
 import os
 from dependency_injector import containers, providers
-from .services import *
+from desafio.Services.Protocols import DatabaseService, CacheService, LogService, TJRJService
+from desafio.Services.Infrastructure import RedisCacheService, KafkaLoggerService, MockTJRJSOAPService, MockExternalDatabaseService
 
 
 class Container(containers.DeclarativeContainer):
     config = providers.Configuration()
-    database_service : DatabaseService = providers.Singleton(MockExternalDatabaseService)
-    tjrj_service : TJRJService = providers.Singleton(MockTJRJSOAPService, os.environ.get("ACCESS_TOKEN_TJRJ", default=''))
+    cache_service : CacheService = providers.Factory(RedisCacheService, int(os.environ.get("CACHE_TTL_IN_SECONDS", default=10)))    
+    tjrj_service : TJRJService = providers.Factory(MockTJRJSOAPService, os.environ.get("ACCESS_TOKEN_TJRJ", default=''))
     log_service : LogService = providers.Factory(KafkaLoggerService)
-    cache_service : CacheService = providers.Factory(RedisCacheService)
+    database_service : DatabaseService = providers.Factory(MockExternalDatabaseService)

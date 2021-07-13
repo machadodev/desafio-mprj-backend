@@ -170,4 +170,3 @@ CACHES = {
 
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"
 SESSION_CACHE_ALIAS = "default"
-CACHE_TTL_IN_SECONDS = int(os.environ.get("CACHE_TTL_IN_SECONDS"))
