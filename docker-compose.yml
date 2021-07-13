@@ -66,9 +66,8 @@ services:
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_CREATE_TOPICS: "documento:1:1,email:1:1"
-    ports:
-      - "${KAFKA_PORT:-9092}:9092"
     networks:
+      - frontend
       - backend
   kafdrop:
     image: obsidiandynamics/kafdrop
@@ -82,6 +81,14 @@ services:
       - "9000:9000"
     networks:
       - frontend
+      - backend
+  email:
+    container_name: "mprj-email-service"
+    build: ./EmailService
+    command: "npm start"
+    depends_on:
+      - "kafka"
+    networks:
       - backend
 networks:
   frontend:
