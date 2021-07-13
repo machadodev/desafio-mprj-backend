@@ -3,9 +3,10 @@ from enum import Enum
 from dependency_injector.wiring import inject, Provide
 from desafio.containers import Container
 from desafio.helper import hashString
-from desafio.Services.Protocols import CacheService, DatabaseService, LogService, TJRJService
+from desafio.Services.Protocols import CacheService, DatabaseService, LogService, TJRJService, EmailService
 
-from desafio.models import Documento
+from desafio.models import Documento,UsuarioObservers
+from django.contrib.auth.models import User
 
 class ObterTramitacoesUseCase:
     
@@ -47,18 +48,33 @@ class ObterTramitacoesUseCase:
     # Traz as tramitações em JSON
     def obterTramitacoesTJRJ(self, id_tjrj):
         return self.TJRJService.obterTramitacoes(id_tjrj)
+    
+    # Se escreve para mudanças no documento
+    # Agora toda mudança que tiver em id_tjrj
+    # o usuario_id será notificado por e-mail
+    def solicitaNoticacoesDeMudancas(self, usuario_id, id_tjrj):
+        usuario = User.objects.get(id=usuario_id)
+        
+        UsuarioObservers.objects.update_or_create(
+            usuario=usuario,
+            id_tjrj=id_tjrj,
+            defaults={}
+        )
 
     # Consulta o DB externo para trazer a id do TJRJ associada
     # ao numero_documento, busca as tramitações e atualiza o hash
-    def obterTramitacoes(self, numero_documento):
+    def obterTramitacoes(self, request, numero_documento):
 
         dados_documento = self.databaseService.obterDocumento(numero_documento)  
         
+        usuario_id = request.user.id
         id_tjrj = dados_documento['id_tjrj']    
         
-        tramitacoes = self.obterTramitacoesTJRJ(id_tjrj)
-
-        self.atualizaHashTramitacoesBanco(numero_documento, id_tjrj, tramitacoes)        
+        tramitacoes = self.obterTramitacoesTJRJ(id_tjrj)        
+        
+        self.atualizaHashTramitacoesBanco(numero_documento, id_tjrj, tramitacoes)
+        
+        self.solicitaNoticacoesDeMudancas(usuario_id, id_tjrj)
         
         return tramitacoes
 
@@ -76,7 +92,7 @@ class ObterTramitacoesUseCaseLoggerDecorator(ObterTramitacoesUseCase):
         self.logService = logService        
 
     def obterTramitacoes(self, request, numero_documento):          
-        tramitacoes = super().obterTramitacoes(numero_documento)
+        tramitacoes = super().obterTramitacoes(request, numero_documento)
              
         # iv - make log
         self.logService.record(request, tramitacoes)
@@ -124,7 +140,8 @@ def handler(request,
 def handlerScheduled(
             database_service : DatabaseService = Provide[Container.database_service],
             tjrj_service : TJRJService = Provide[Container.tjrj_service],
-            cache_service : CacheService = Provide[Container.cache_service]):
+            cache_service : CacheService = Provide[Container.cache_service],
+            email_service: EmailService = Provide[Container.email_service]):
     
     instance = ObterTramitacoesUseCase(database_service, tjrj_service)
     
@@ -136,4 +153,19 @@ def handlerScheduled(
         action = instance.atualizaHashTramitacoesBanco(numero_documento=tramitacao.id_doc,id_tjrj=tramitacao.id_tjrj, tramitacoes=tramitacoes)
         
         if action == ObterTramitacoesUseCase.Action.UPDATED:
-            print("POSTAR EVENTO NO KAFKA, pois TRAMITACAO MUDOU")
+            
+            # Se o documento mudou, invalidar o cache para próxima requisição de usuário
+            # acessar o serviço do SOAP
+            cache_service.delete(tramitacao.id_doc)
+            
+            # Retorna todos os usuarios que fizeram alguma consulta a esse documento
+            # Esses usuários são os interessados nas mudanças desse documento
+            usuariosObservers = UsuarioObservers.objects.filter(id_tjrj=tramitacao.id_tjrj)
+            
+            # # Disparar um email para cada um dos usuarios interessados avisando da mudança
+            # # O primeiro que acessar vai gerar um novo cache no servidor
+            # # e os próximos já vão acessar a versão nova em cache            
+            for interessado in usuariosObservers:
+                email_service.enviarEmail(interessado.usuario, {
+                    "mensagem": "O conteúdo que você consultou mudou!"
+                })
