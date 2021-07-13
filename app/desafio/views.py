@@ -4,16 +4,14 @@ from rest_framework.response import Response
 from rest_framework_xml.parsers import XMLParser
 from rest_framework_xml.renderers import XMLRenderer
 from rest_framework.permissions import IsAuthenticated
-from desafio.serializers import DocumentoSerializer
-
-from desafio.exceptions import *
 from desafio.permissions import PermissionDocumento
-from desafio import usecases
-
+# Cache
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 from project_config.settings import CACHE_TTL_IN_SECONDS
-
+from desafio.serializers import DocumentoSerializer
+from desafio.exceptions import *
+from desafio import usecases
 
 class TramitacaoDocumentoAPIView(APIView):
     parser_classes = [XMLParser]
@@ -29,10 +27,8 @@ class TramitacaoDocumentoAPIView(APIView):
             raise UnprocessableEntityException(errors=serializer.errors)        
         
     def handler(self, request, id_documento):
-        valid_data = self.validate(id_documento)
-        
-        #return usecases.handler(request, valid_data)                
-        return usecases.handler(request, valid_data)
+        validated_data = self.validate(id_documento)            
+        return usecases.handler(request, validated_data)
     
     @method_decorator(cache_page(CACHE_TTL_IN_SECONDS))
     def get(self, request, id_documento, format=None):        
