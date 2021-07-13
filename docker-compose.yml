@@ -38,6 +38,14 @@ services:
     networks:
       - frontend
       - backend
+  redis:
+    image: redis
+    container_name: mprj-redis
+    command: redis-server
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    networks:
+      - backend
 networks:
   frontend:
   backend:

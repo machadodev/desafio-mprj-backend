@@ -5,9 +5,14 @@ from rest_framework_xml.parsers import XMLParser
 from rest_framework_xml.renderers import XMLRenderer
 from rest_framework.permissions import IsAuthenticated
 from desafio.serializers import DocumentoSerializer
+
 from desafio.exceptions import *
 from desafio.permissions import PermissionDocumento
 from desafio import usecases
+
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
+from project_config.settings import CACHE_TTL_IN_SECONDS
 
 
 class TramitacaoDocumentoAPIView(APIView):
@@ -28,7 +33,8 @@ class TramitacaoDocumentoAPIView(APIView):
         
         #return usecases.handler(request, valid_data)                
         return usecases.handler(request, valid_data)
-
+    
+    @method_decorator(cache_page(CACHE_TTL_IN_SECONDS))
     def get(self, request, id_documento, format=None):        
         response = None        
         try:            
@@ -38,6 +44,7 @@ class TramitacaoDocumentoAPIView(APIView):
         except NotFoundException as ex:
             response = Response(ex.message, status=ex.code)
         except Exception as ex:
+            print("EXCEPTION:", ex)
             ex = InternalServerException()
             response = Response(ex.message, status=ex.code)
         finally:

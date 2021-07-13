@@ -4,3 +4,4 @@ psycopg2-binary==2.8.5
 dependency-injector
 djangorestframework-xml
 djangorestframework-simplejwt
+django-redis

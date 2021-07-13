@@ -12,9 +12,6 @@ class LogService:
     def record(self, request, dados):
         pass
 
-class CacheService:
-        pass
-
 # =========================================
 
 # Implementações
@@ -63,6 +60,3 @@ class KafkaLoggerService(LogService):
         log = self.LoggerFormat(request, dados)
         print("Logger Service Kafka:")
         print("Log info:", log.log)
-
-class RedisService(CacheService):
-    pass
