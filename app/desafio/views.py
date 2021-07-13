@@ -3,6 +3,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework_xml.parsers import XMLParser
 from rest_framework_xml.renderers import XMLRenderer
+from rest_framework.permissions import IsAuthenticated
 from desafio.serializers import DocumentoSerializer
 from desafio.exceptions import *
 from desafio import usecases
@@ -10,7 +11,8 @@ from desafio import usecases
 class TramitacaoDocumentoAPIView(APIView):
     parser_classes = [XMLParser]
     renderer_classes = [XMLRenderer]
-    
+    permission_classes = (IsAuthenticated,)
+
     def validate(self, id_documento):
         serializer = DocumentoSerializer(data={"id": id_documento})
         
