@@ -16,7 +16,7 @@ class LogService:
 class CacheService:    
     def get(self, key):
         pass
-    def set(self, key, value):
+    def set(self, key, value, ttl):
         pass
     def delete(self, key):
         pass
@@ -76,7 +76,7 @@ class RedisCacheService:
         #return cache.get(key, None)
         return None
     
-    def set(self, key, value):
+    def set(self, key, value, ttl):
         pass
     def delete(self, key):
         pass
