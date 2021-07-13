@@ -32,8 +32,7 @@ class ObterTramitacaoDocumentoUseCaseLoggerDecorator(ObterTramitacaoDocumentoUse
         self.databaseService = databaseService
         self.TJRJService = TJRJService
         self.logService = logService        
-        
-    
+
     def obterTramitacaoDocumento(self, request, documento):
         tramitacao = super().obterTramitacaoDocumento(documento)
         
@@ -59,7 +58,7 @@ class ObterTramitacaoDocumentoUseCaseCacheDecorator(ObterTramitacaoDocumentoUseC
         
         if tramitacao is None:           
             tramitacao = super().obterTramitacaoDocumento(request, documento)
-            self.cacheService.set(tramitacao, CACHE_TTL_IN_SECONDS)
+            self.cacheService.set(documento, tramitacao, CACHE_TTL_IN_SECONDS)
         
         return tramitacao
 

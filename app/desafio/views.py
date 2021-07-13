@@ -1,8 +1,8 @@
 from django.http import HttpResponse
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework_xml.parsers import XMLParser
-from rest_framework_xml.renderers import XMLRenderer
+#from rest_framework_xml.parsers import XMLParser
+#from rest_framework_xml.renderers import XMLRenderer
 from rest_framework.permissions import IsAuthenticated
 from desafio.permissions import PermissionDocumento
 from desafio.serializers import DocumentoSerializer
@@ -10,8 +10,8 @@ from desafio.exceptions import *
 from desafio.UseCase import ObterTramitacaoDocumentoUseCase
 
 class TramitacaoDocumentoAPIView(APIView):
-    parser_classes = [XMLParser]
-    renderer_classes = [XMLRenderer]
+    #parser_classes = [XMLParser]
+    #renderer_classes = [XMLRenderer]
     permission_classes = (IsAuthenticated, PermissionDocumento)
 
     def validate(self, id_documento):
@@ -30,7 +30,7 @@ class TramitacaoDocumentoAPIView(APIView):
         response = None        
         try:        
             documento_tramitacao = self.handler(request, id_documento)
-            response = HttpResponse(documento_tramitacao, content_type="text/xml")   
+            response = Response(documento_tramitacao)
         except UnprocessableEntityException as ex:
             response = Response(ex.errors, status=ex.code)
         except NotFoundException as ex:
