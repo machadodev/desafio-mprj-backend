@@ -6,3 +6,4 @@ djangorestframework-xml
 djangorestframework-simplejwt
 django-redis
 apscheduler
+xmltodict
