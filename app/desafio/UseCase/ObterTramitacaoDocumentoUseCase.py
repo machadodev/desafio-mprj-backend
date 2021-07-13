@@ -81,15 +81,15 @@ def handlerScheduled(
             tjrj_service : TJRJService = Provide[Container.tjrj_service],
             cache_service : CacheService = Provide[Container.cache_service]):
     
-    cachedConsultaDocumentos = [{ "id": 1, "hash": '777c6d651d8f956c519dcec7ff2457e1' }]
+    TramitacoesObservadas = [{ "id": 1, "hash": '777c6d651d8f956c519dcec7ff2457e1' }]
     
-    for documento in cachedConsultaDocumentos:
+    for tramitacao in TramitacoesObservadas:
         usecase = ObterTramitacaoDocumentoUseCase(database_service, tjrj_service)
-        documento_tramitacao = usecase.obterTramitacaoDocumento(documento)
+        documento_tramitacao = usecase.obterTramitacaoDocumento(tramitacao)
         
-        hash_documento = hashString(documento_tramitacao)
+        hash_documento_tramitacao = hashString(documento_tramitacao)
         
-        if documento['hash'] != hash_documento:            
-            print("Documento atualizado:", documento)           
+        if tramitacao['hash'] != hash_documento_tramitacao:            
+            print("Documento atualizado:", documento_tramitacao)           
         else:
             print("Documento nao teve alteracoes")
