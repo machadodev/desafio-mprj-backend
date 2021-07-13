@@ -1,0 +1,97 @@
+version: '3.7'
+
+services:
+  web:
+    container_name: mprj-django
+    build: ./app
+    command: sh -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
+    volumes:
+      - ./app/:/usr/src/app/
+    ports:
+      - "${DJANGO_PORT:-80}:8000"
+    env_file:
+      - .env
+    depends_on:
+      - database
+    networks:
+      - frontend
+      - backend
+  database:
+    image: postgres:12.0-alpine
+    container_name: mprj-postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: ${SQL_USER:-postgres}
+      POSTGRES_PASSWORD: ${SQL_PASSWORD:-123456}
+      POSTGRES_DB: ${SQL_DATABASE:-mprj}
+    networks:
+      - backend
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: mprj-pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-admin@gmail.com}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-123456}
+    ports:
+      - "${PGADMIN_PORT:-8081}:80"
+    networks:
+      - frontend
+      - backend
+  redis:
+    image: redis
+    container_name: mprj-redis
+    command: redis-server
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    networks:
+      - backend
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    container_name: mprj-zookeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 32181
+      ZOOKEEPER_TICK_TIME: 2000
+    networks:
+      - backend
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    container_name: mprj-kafka
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:32181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_CREATE_TOPICS: "documento:1:1,email:1:1"
+    networks:
+      - frontend
+      - backend
+  kafdrop:
+    image: obsidiandynamics/kafdrop
+    container_name: "mprj-kafdrop"
+    depends_on:
+      - "kafka"
+    environment:
+      KAFKA_BROKERCONNECT: "kafka:29092"
+      JVM_OPTS: "-Xms16M -Xmx48M -Xss180K -XX:-TieredCompilation -XX:+UseStringDeduplication -noverify"
+    ports:
+      - "9000:9000"
+    networks:
+      - frontend
+      - backend
+  email:
+    container_name: "mprj-email-service"
+    build: ./EmailService
+    command: "npm start"
+    depends_on:
+      - "kafka"
+    networks:
+      - backend
+networks:
+  frontend:
+  backend:
+volumes:
+  postgres_data:
