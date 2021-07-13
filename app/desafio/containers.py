@@ -8,3 +8,4 @@ class Container(containers.DeclarativeContainer):
     database_service : DatabaseService = providers.Singleton(MockExternalDatabaseService)
     tjrj_service : TJRJService = providers.Singleton(MockTJRJSOAPService, os.environ.get("ACCESS_TOKEN_TJRJ", default=''))
     log_service : LogService = providers.Factory(KafkaLoggerService)
+    cache_service : CacheService = providers.Factory(RedisCacheService)

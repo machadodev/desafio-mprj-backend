@@ -1,12 +1,12 @@
 from django.apps import AppConfig
-#from app import project_config
 from . import container
-import sys
-from . import usecases
+from .UseCase import ObterTramitacaoDocumentoUseCase
 
 
 class DesafioConfig(AppConfig):
     name = 'desafio'
 
     def ready(self):
-        container.wire(modules=[usecases])
+        container.wire(modules=[ObterTramitacaoDocumentoUseCase])
+        from .tasks import start
+        start()

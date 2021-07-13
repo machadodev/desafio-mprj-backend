@@ -1,0 +1,95 @@
+from desafio.services import *
+from project_config.settings import CACHE_TTL_IN_SECONDS
+from dependency_injector.wiring import inject, Provide
+from desafio.containers import Container
+from desafio.helper import hashString
+
+class ObterTramitacaoDocumentoUseCase:  
+    # Dependencies injection
+    def __init__(self, 
+                 databaseService : DatabaseService, 
+                 TJRJService : TJRJService):
+        self.databaseService = databaseService
+        self.TJRJService = TJRJService
+    
+    def obterTramitacaoDocumento(self, documento):
+        tramitacao = None
+                
+        # ii
+        dados_documento = self.databaseService.findDocumento(documento)       
+        
+        # iii
+        tramitacao = self.TJRJService.findTramitacao(dados_documento)
+
+        return tramitacao
+
+class ObterTramitacaoDocumentoUseCaseLoggerDecorator(ObterTramitacaoDocumentoUseCase):
+    def __init__(self, 
+                 databaseService : DatabaseService, 
+                 TJRJService : TJRJService,
+                 logService : LogService):
+        super().__init__(databaseService, TJRJService)
+        self.databaseService = databaseService
+        self.TJRJService = TJRJService
+        self.logService = logService        
+        
+    
+    def obterTramitacaoDocumento(self, request, documento):
+        tramitacao = super().obterTramitacaoDocumento(documento)
+        
+        # iv - make log
+        self.logService.record(request, tramitacao)
+        
+        return tramitacao
+
+class ObterTramitacaoDocumentoUseCaseCacheDecorator(ObterTramitacaoDocumentoUseCaseLoggerDecorator):
+    def __init__(self, 
+                 databaseService : DatabaseService, 
+                 TJRJService : TJRJService,
+                 logService : LogService,
+                 cacheService : CacheService):
+        super().__init__(databaseService, TJRJService, logService)
+        self.databaseService = databaseService
+        self.TJRJService = TJRJService
+        self.logService = logService
+        self.cacheService = cacheService        
+    
+    def obterTramitacaoDocumento(self, request, documento):        
+        tramitacao = self.cacheService.get(documento)
+        
+        if tramitacao is None:           
+            tramitacao = super().obterTramitacaoDocumento(request, documento)
+            self.cacheService.set(tramitacao, CACHE_TTL_IN_SECONDS)
+        
+        return tramitacao
+
+@inject
+def handler(request, 
+            documento,
+            database_service : DatabaseService = Provide[Container.database_service],
+            tjrj_service : TJRJService = Provide[Container.tjrj_service],
+            log_service : LogService = Provide[Container.log_service],
+            cache_service : CacheService = Provide[Container.cache_service]):
+    
+    instance = ObterTramitacaoDocumentoUseCaseCacheDecorator(database_service, tjrj_service, log_service, cache_service)
+    
+    return instance.obterTramitacaoDocumento(request, documento)   
+
+@inject
+def handlerScheduled(
+            database_service : DatabaseService = Provide[Container.database_service],
+            tjrj_service : TJRJService = Provide[Container.tjrj_service],
+            cache_service : CacheService = Provide[Container.cache_service]):
+    
+    cachedConsultaDocumentos = [{ "id": 1, "hash": '777c6d651d8f956c519dcec7ff2457e1' }]
+    
+    for documento in cachedConsultaDocumentos:
+        usecase = ObterTramitacaoDocumentoUseCase(database_service, tjrj_service)
+        documento_tramitacao = usecase.obterTramitacaoDocumento(documento)
+        
+        hash_documento = hashString(documento_tramitacao)
+        
+        if documento['hash'] != hash_documento:            
+            print("Documento atualizado:", documento)           
+        else:
+            print("Documento nao teve alteracoes")
