@@ -1,8 +1,17 @@
 import json
+import os
+from kafka import KafkaProducer
+from kafka.errors import KafkaError
 from desafio.Services.Protocols import LogService
 
 
 class KafkaLoggerService(LogService):
+    def __init__(self) -> None:
+        connection = os.environ.get("KAFKA_HOST") + ":" + os.environ.get("KAFKA_PORT")
+        self.producer = KafkaProducer(bootstrap_servers=connection,
+                                      value_serializer=lambda v: json.dumps(v, ensure_ascii=False).encode('utf-8'))
+        super().__init__()
+        
     class LoggerFormat:
         def __init__(self, request, documento_tramitacao):
             
@@ -16,10 +25,11 @@ class KafkaLoggerService(LogService):
                 "user_agent": request.headers['User-Agent'],
                 "data": json.loads(json_data)
             }
-            
-            self.log = json.dumps(self.log, ensure_ascii=False)  
     
     def record(self, request, dados):
         loggerFormat = self.LoggerFormat(request, dados)
-        print("LOGGER KAFKA:")
-        print("Log info:", loggerFormat.log)
+        try:
+            self.producer.send('documento', loggerFormat.log)
+        except KafkaError as ex:
+            print("KafkaLoggerService::record()", ex)
+        
