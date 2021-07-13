@@ -4,6 +4,6 @@ from .UseCase import ObterTramitacaoDocumentoUseCase
 
 def start():
     scheduler = BackgroundScheduler()
-    scheduler.add_job(ObterTramitacaoDocumentoUseCase.handlerScheduled, 'interval', seconds=10)
+    scheduler.add_job(ObterTramitacaoDocumentoUseCase.handlerScheduled, 'interval', minutes=10)
     scheduler.start()
     
