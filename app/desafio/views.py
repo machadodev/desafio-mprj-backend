@@ -7,29 +7,29 @@ from rest_framework.permissions import IsAuthenticated
 from desafio.permissions import PermissionDocumento
 from desafio.serializers import DocumentoSerializer
 from desafio.exceptions import *
-from desafio.UseCase import ObterTramitacaoDocumentoUseCase
+from desafio.UseCase import ObterTramitacoesUseCase
 
 class TramitacaoDocumentoAPIView(APIView):
     #parser_classes = [XMLParser]
     #renderer_classes = [XMLRenderer]
     permission_classes = (IsAuthenticated, PermissionDocumento)
 
-    def validate(self, id_documento):
-        serializer = DocumentoSerializer(data={"id": id_documento})
+    def validate(self, numero_documento):
+        serializer = DocumentoSerializer(data={"numero": numero_documento})
         
         if serializer.is_valid():
-            return serializer.data            
+            return serializer.data['numero']
         else:
             raise UnprocessableEntityException(errors=serializer.errors)        
         
-    def handler(self, request, id_documento):
-        validated_data = self.validate(id_documento)            
-        return ObterTramitacaoDocumentoUseCase.handler(request, validated_data)
+    def handler(self, request, numero_documento):
+        numero_documento_validado = self.validate(numero_documento)
+        return ObterTramitacoesUseCase.handler(request, numero_documento_validado)
 
-    def get(self, request, id_documento, format=None):    
+    def get(self, request, numero_documento, format=None):    
         response = None        
         try:        
-            documento_tramitacao = self.handler(request, id_documento)
+            documento_tramitacao = self.handler(request, numero_documento)
             response = Response(documento_tramitacao)
         except UnprocessableEntityException as ex:
             response = Response(ex.errors, status=ex.code)

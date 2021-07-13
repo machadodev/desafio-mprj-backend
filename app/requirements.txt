@@ -2,7 +2,7 @@ Django==3.1
 djangorestframework>=3.9
 psycopg2-binary==2.8.5
 dependency-injector
-djangorestframework-xml
+#djangorestframework-xml
 djangorestframework-simplejwt
 django-redis
 apscheduler

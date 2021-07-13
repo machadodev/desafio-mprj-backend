@@ -1,3 +1,3 @@
 class TJRJService:
-    def findTramitacao(self, dados):
+    def obterTramitacoes(self, id_tjrj):
         pass

@@ -1,3 +1,3 @@
 class DatabaseService:
-    def findDocumento(self, dados):
+    def obterDocumento(self, numero_documento):
         pass
