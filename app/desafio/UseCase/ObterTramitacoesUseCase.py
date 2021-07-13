@@ -14,9 +14,9 @@ class ObterTramitacoesUseCase:
     # Dependencies injection
     def __init__(self, 
                  databaseService : DatabaseService, 
-                 TJRJService : TJRJService):
+                 tjrjService : TJRJService):
         self.databaseService = databaseService
-        self.TJRJService = TJRJService
+        self.tjrjService = tjrjService
 
     class Action(Enum):
         NO_ACTION = 1
@@ -47,7 +47,7 @@ class ObterTramitacoesUseCase:
     
     # Traz as tramitações em JSON
     def obterTramitacoesTJRJ(self, id_tjrj):
-        return self.TJRJService.obterTramitacoes(id_tjrj)
+        return self.tjrjService.obterTramitacoes(id_tjrj)
     
     # Se escreve para mudanças no documento
     # Agora toda mudança que tiver em id_tjrj
@@ -84,11 +84,11 @@ class ObterTramitacoesUseCase:
 class ObterTramitacoesUseCaseLoggerDecorator(ObterTramitacoesUseCase):
     def __init__(self, 
                  databaseService : DatabaseService, 
-                 TJRJService : TJRJService,
+                 tjrjService : TJRJService,
                  logService : LogService):
-        super().__init__(databaseService, TJRJService)
+        super().__init__(databaseService, tjrjService)
         self.databaseService = databaseService
-        self.TJRJService = TJRJService
+        self.tjrjService = tjrjService
         self.logService = logService        
 
     def obterTramitacoes(self, request, numero_documento):          
@@ -107,12 +107,12 @@ class ObterTramitacoesUseCaseLoggerDecorator(ObterTramitacoesUseCase):
 class ObterTramitacoesUseCaseCacheDecorator(ObterTramitacoesUseCaseLoggerDecorator):
     def __init__(self, 
                  databaseService : DatabaseService, 
-                 TJRJService : TJRJService,
+                 tjrjService : TJRJService,
                  logService : LogService,
                  cacheService : CacheService):
-        super().__init__(databaseService, TJRJService, logService)
+        super().__init__(databaseService, tjrjService, logService)
         self.databaseService = databaseService
-        self.TJRJService = TJRJService
+        self.tjrjService = tjrjService
         self.logService = logService
         self.cacheService = cacheService        
     
