@@ -6,7 +6,7 @@ class DesafioConfig(AppConfig):
     name = 'desafio'
 
     def ready(self):
-        from .UseCase import ObterTramitacoesUseCase
+        from .usecase import ObterTramitacoesUseCase
         container.wire(modules=[ObterTramitacoesUseCase])
         from .tasks import start
         start()
