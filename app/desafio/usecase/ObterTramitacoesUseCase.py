@@ -8,12 +8,6 @@ from desafio.helper import hashString
 
 
 class ObterTramitacoesUseCase:
-    # Construtor
-    # Dependencies injection
-    def __init__(self, databaseService, tjrjService):
-        self.databaseService = databaseService
-        self.tjrjService = tjrjService
-
     class Action(Enum):
         NO_ACTION = 1
         UPDATED = 2
@@ -43,8 +37,11 @@ class ObterTramitacoesUseCase:
         return action
 
     # Traz as tramitações em JSON
-    def obterTramitacoesTJRJ(self, id_tjrj):
-        return self.tjrjService.obterTramitacoes(id_tjrj)
+    @inject
+    def obterTramitacoesTJRJ(self,
+                             id_tjrj,
+                             tjrj_service=Provide[Container.tjrj_service]):
+        return tjrj_service.obterTramitacoes(id_tjrj)
 
     # Se escreve para mudanças no documento
     # Agora toda mudança que tiver em id_tjrj
@@ -60,9 +57,13 @@ class ObterTramitacoesUseCase:
 
     # Consulta o DB externo para trazer a id do TJRJ associada
     # ao numero_documento, busca as tramitações e atualiza o hash
-    def obterTramitacoes(self, request, numero_documento):
+    @inject
+    def obterTramitacoes(self,
+                         request,
+                         numero_documento,
+                         database_service=Provide[Container.database_service]):
 
-        dados_documento = self.databaseService.obterDocumento(numero_documento)
+        dados_documento = database_service.obterDocumento(numero_documento)
 
         usuario_id = request.user.id
         id_tjrj = dados_documento['id_tjrj']
@@ -78,79 +79,62 @@ class ObterTramitacoesUseCase:
 
 # DECORATOR
 # Essa classe serve para estender as funcionalidades da classe original
-# Nela faremos logs do request e das tramitações
-
-
-class ObterTramitacoesUseCaseLoggerDecorator(ObterTramitacoesUseCase):
-    def __init__(self,
-                 databaseService,
-                 tjrjService,
-                 logService):
-        super().__init__(databaseService, tjrjService)
-        self.databaseService = databaseService
-        self.tjrjService = tjrjService
-        self.logService = logService
-
-    def obterTramitacoes(self, request, numero_documento):
-        tramitacoes = super().obterTramitacoes(request, numero_documento)
-
-        # iv - make log
-        self.logService.record(request, tramitacoes)
-
-        return tramitacoes
-
-# DECORATOR
-# Essa classe serve para estender as funcionalidades da classe original
 # Nela faremos a configuração do CACHE para verificar se devemos devolver
 # uma informaçaõ que está salva em memória ou devemos prosseguir a consulta
 # nos serviços externos
 
 
 class ObterTramitacoesUseCaseCacheDecorator(
-    ObterTramitacoesUseCaseLoggerDecorator
+    ObterTramitacoesUseCase
 ):
-    def __init__(self,
-                 databaseService,
-                 tjrjService,
-                 logService,
-                 cacheService):
-        super().__init__(databaseService, tjrjService, logService)
-        self.databaseService = databaseService
-        self.tjrjService = tjrjService
-        self.logService = logService
-        self.cacheService = cacheService
+    @inject
+    def obterTramitacoes(self,
+                         request,
+                         numero_documento,
+                         cache_service=Provide[Container.cache_service]):
 
-    def obterTramitacoes(self, request, numero_documento):
-        tramitacoes = self.cacheService.get(numero_documento)
+        tramitacoes = cache_service.get(numero_documento)
 
         if tramitacoes is None:
             tramitacoes = super().obterTramitacoes(request, numero_documento)
-            self.cacheService.set(numero_documento, tramitacoes)
+            cache_service.set(numero_documento, tramitacoes)
+
+        return tramitacoes
+
+# DECORATOR
+# Essa classe serve para estender as funcionalidades da classe original
+# Nela faremos logs do request e das tramitações
+
+
+class ObterTramitacoesUseCaseLoggerDecorator(
+        ObterTramitacoesUseCaseCacheDecorator
+):
+    @inject
+    def obterTramitacoes(self,
+                         request,
+                         numero_documento,
+                         log_service=Provide[Container.log_service]):
+
+        tramitacoes = super().obterTramitacoes(request, numero_documento)
+
+        # iv - make log
+        log_service.record(request, tramitacoes)
 
         return tramitacoes
 
 
-@inject
-def handler(request,
-            numero_documento,
-            database_service=Provide[Container.database_service],
-            tjrj_service=Provide[Container.tjrj_service],
-            log_service=Provide[Container.log_service],
-            cache_service=Provide[Container.cache_service]):
-    instance = ObterTramitacoesUseCaseCacheDecorator(
-        database_service, tjrj_service, log_service, cache_service)
+def handler(request, numero_documento):
+    instance = ObterTramitacoesUseCaseLoggerDecorator()
 
     return instance.obterTramitacoes(request, numero_documento)
 
 
 @inject
 def handlerScheduled(
-        database_service=Provide[Container.database_service],
-        tjrj_service=Provide[Container.tjrj_service],
         cache_service=Provide[Container.cache_service],
         email_service=Provide[Container.email_service]):
 
-    instance = ObterTramitacoesUseCase(database_service, tjrj_service)
+    instance = ObterTramitacoesUseCase()
 
     tramitacoesObservadas = Documento.objects.distinct("id_tjrj")
 
